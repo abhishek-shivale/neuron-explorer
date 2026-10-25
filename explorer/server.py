@@ -24,7 +24,7 @@ from rank import compute_units  # noqa: E402
 from runtime import NO_MODEL, Runtime  # noqa: E402
 
 RUNS, STATS = os.path.join(ROOT, "runs"), os.path.join(ROOT, "stats")
-NAMES = os.path.join(ROOT, "explorer", "names.json")
+NAMES = os.environ.get("EXPLORER_NAMES_FILE", os.path.join(ROOT, "explorer", "names.json"))
 PORT = int(os.environ.get("PORT", 8791))
 _cfg = AutoConfig.from_pretrained("Qwen/Qwen3.5-4B").get_text_config()
 ARCH = {"n_layers": _cfg.num_hidden_layers, "hidden": _cfg.hidden_size, "inter": _cfg.intermediate_size,
@@ -1072,4 +1072,4 @@ def preload():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=PORT)
+    uvicorn.run(app, host=os.environ.get("HOST", "127.0.0.1"), port=PORT)
