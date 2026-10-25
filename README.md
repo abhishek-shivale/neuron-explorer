@@ -29,6 +29,45 @@ steered chat, lens, connections and live inference over your own text.
   `explorer/agent_prompt.local.md` when present (untracked, for your own additions);
   `EXPLORER_CLAUDE_MODEL` picks the model. The server answers only pages and tools on this machine.
 
+## Docker
+
+With Docker and Docker Compose installed, run from the repository root:
+
+```sh
+mkdir -p runs stats
+docker compose up --build -d
+```
+
+Open http://localhost:8791. The port is published only on localhost, preserving the server's local-only access checks.
+Keep port 8791 on both sides of the mapping, since those checks validate the Host and Origin ports.
+
+The image installs dependencies from `uv.lock` and includes the shipped explorer caches. Hugging Face downloads,
+generated caches and neuron names persist in named volumes. Put sweep data in the host's `runs/` and `stats/`
+directories; these are mounted into the container and must be writable by container UID 1000. Existing
+`explorer/names.json` can be imported with `docker compose cp explorer/names.json explorer:/app/explorer/cache/names.json`.
+
+The first start downloads the model configuration and model weights, then loads Qwen3.5-4B. This needs internet,
+disk space and enough RAM or VRAM for the model. The HTTP health check confirms the server responds; check
+`docker compose logs -f explorer` for model loading. To browse cached results without loading model weights:
+
+```sh
+EXPLORER_NO_MODEL=1 docker compose up -d
+```
+
+Cache-only mode still fetches the small model configuration on first start. A fresh clone has no sweep runs or stats,
+so rollout lists remain empty until you add data. The container does not install or authenticate the optional Claude
+CLI, so its Claude tab is unavailable. The sweep GPU-pod setup is separate from this explorer image.
+
+For live inference on an NVIDIA GPU, install NVIDIA Container Toolkit on a Linux host with a driver compatible
+with the CUDA runtime supplied by the locked PyTorch wheel, then run:
+
+```sh
+docker compose -f compose.yaml -f compose.gpu.yaml up --build -d
+```
+
+Otherwise, inference runs on CPU. Docker on macOS cannot use Apple MPS; run the explorer natively for Apple GPU
+acceleration. Stop with `docker compose down`; named volumes are retained unless you add `--volumes`.
+
 ## Sweep
 
 Runs on a CUDA 13 GPU pod with the steering fork of vLLM ([RhizoNymph/vllm](https://github.com/RhizoNymph/vllm)).

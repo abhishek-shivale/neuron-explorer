@@ -1,0 +1,19 @@
+services:
+  explorer:
+    build: .
+    ports:
+      - "127.0.0.1:8791:8791"
+    environment:
+      # Any non-empty value disables live inference. Leave empty to load the model.
+      EXPLORER_NO_MODEL: ${EXPLORER_NO_MODEL:-}
+    volumes:
+      - huggingface:/home/app/.cache/huggingface
+      - explorer-cache:/app/explorer/cache
+      - ./runs:/app/runs
+      - ./stats:/app/stats
+    init: true
+    restart: unless-stopped
+
+volumes:
+  huggingface:
+  explorer-cache:
